@@ -13,5 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expone el puerto donde correrá la app
 EXPOSE 8050
 
+# Comando para correr la app (NO incluir cargar_datos.py aquí)
+CMD ["python", "app.py"]
+
 # Comando final: primero carga datos, luego corre la app
-CMD python cargar_datos.py && python app.py
+#MD python cargar_datos.py && python app.py

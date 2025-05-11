@@ -6,14 +6,17 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 # Configuración de conexión a PostgreSQL
-usuario = "postgres"
-contraseña = "eliana20062004"
-host = "localhost"  # Cambia a 'db' si estás usando Docker Compose con servicio llamado 'db'
-puerto = "5432"
-base_datos = "proyecto_grupal"
+from sqlalchemy import create_engine
+import os
 
-# Crear engine para leer desde PostgreSQL
+usuario = os.environ.get("DB_USER")
+contraseña = os.environ.get("DB_PASS")
+host = os.environ.get("DB_HOST")
+puerto = os.environ.get("DB_PORT")
+base_datos = os.environ.get("DB_NAME")
+
 engine = create_engine(f"postgresql+psycopg2://{usuario}:{contraseña}@{host}:{puerto}/{base_datos}")
+
 
 # Leer tabla desde la base de datos
 df = pd.read_sql("SELECT * FROM dataset_final", con=engine)

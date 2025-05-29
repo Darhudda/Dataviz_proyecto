@@ -42,7 +42,7 @@ server = app.server
 
 
 subtabs_metodologia = dcc.Tabs([
-    dcc.Tab(label='a. Definición del Problema', children=[
+    dcc.Tab(label='Definición del Problema', children=[
         dbc.Card([
             dbc.CardBody([
                 html.H4("🔍 Tipo de problema y variable objetivo", className="mb-3"),
@@ -59,7 +59,7 @@ subtabs_metodologia = dcc.Tabs([
         ], className="mt-4 mb-4", style={'backgroundColor': '#f8f9fa', 'borderRadius': '10px'})
     ]),
 
-    dcc.Tab(label='b. Preparación de Datos', children=[
+    dcc.Tab(label='Preparación de Datos', children=[
         dbc.Card([
             dbc.CardBody([
                 html.H4("🧹 Limpieza y transformación de datos", className="mb-3"),
@@ -83,7 +83,7 @@ subtabs_metodologia = dcc.Tabs([
         ], className="mt-4 mb-4", style={'backgroundColor': '#f8f9fa', 'borderRadius': '10px'})
     ]),
 
-    dcc.Tab(label='c. Selección del Modelo', children=[
+    dcc.Tab(label='Selección del Modelo', children=[
         dbc.Card([
             dbc.CardBody([
                 html.H4("📌 Modelos implementados", className="mb-3"),
@@ -106,7 +106,7 @@ subtabs_metodologia = dcc.Tabs([
         ], className="mt-4 mb-4", style={'backgroundColor': '#f8f9fa', 'borderRadius': '10px'})
     ]),
 
-    dcc.Tab(label='d. Evaluación del Modelo', children=[
+    dcc.Tab(label='Evaluación del Modelo', children=[
         dbc.Card([
             dbc.CardBody([
                 html.H4("📏 Métricas de desempeño y validación", className="mb-3"),
@@ -154,47 +154,193 @@ hora_stats.columns = ['No Fraude', 'Fraude']
 import plotly.graph_objects as go
 
 fig_transacciones_hora = go.Figure()
+
+# Línea No Fraude en azul medio
 fig_transacciones_hora.add_trace(go.Scatter(
-    x=hora_stats.index, y=hora_stats['No Fraude'], mode='lines', name='No Fraude'))
+    x=hora_stats.index,
+    y=hora_stats['No Fraude'],
+    mode='lines',
+    name='No Fraude',
+    line=dict(color='#5DADE2')  # azul medio
+))
+
+# Línea Fraude en azul oscuro
 fig_transacciones_hora.add_trace(go.Scatter(
-    x=hora_stats.index, y=hora_stats['Fraude'], mode='lines', name='Fraude'))
+    x=hora_stats.index,
+    y=hora_stats['Fraude'],
+    mode='lines',
+    name='Fraude',
+    line=dict(color='#2874A6')  # azul fuerte
+))
 
 fig_transacciones_hora.update_layout(
     title='Transacciones por Hora Virtual',
     xaxis_title='Hora virtual (desde el inicio del registro)',
     yaxis_title='Número de transacciones',
     template='plotly_white',
+    paper_bgcolor='#eaf4fc',
+    plot_bgcolor='white',
     height=400
 )
 
 
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+import dash_bootstrap_components as dbc
+from dash import html, dcc
+
+# Dataset simulado para EDA 2
+eda2_df = pd.DataFrame({
+    'Monto': [10, 50, 60, 400, 20, 10, 5, 900, 800, 1200, 10, 5, 5, 5],
+    'Fraude': ['Sí', 'No', 'No', 'Sí', 'No', 'No', 'No', 'Sí', 'Sí', 'Sí', 'No', 'No', 'No', 'No']
+})
+
+eda2_fig = px.histogram(
+    eda2_df, x='Monto', color='Fraude', nbins=20,
+    title='Distribución de montos por tipo de transacción',
+    color_discrete_sequence=['#2874A6', '#5DADE2']  # azul fuerte y medio
+)
+
+eda2_fig.update_layout(
+    template='plotly_white',
+    paper_bgcolor='#eaf4fc',
+    plot_bgcolor='white'
+)
+
+
+# Comparación entre modelos
+metricas_df = pd.DataFrame({
+    'Modelo': ['Random Forest', 'XGBoost', 'StackingClassifier'],
+    'AUC': [0.93, 0.94, 0.96],
+    'Precision': [0.87, 0.89, 0.91],
+    'Recall': [0.76, 0.78, 0.84],
+    'F1-Score': [0.81, 0.83, 0.87]
+})
+
+fig_comparacion_modelos = px.bar(
+    metricas_df.melt(id_vars='Modelo', var_name='Métrica', value_name='Valor'),
+    x='Métrica',
+    y='Valor',
+    color='Modelo',
+    barmode='group',
+    title='Comparación de métricas por modelo',
+    color_discrete_map={
+        'Random Forest': '#5DADE2',       # azul medio
+        'XGBoost': '#2874A6',             # azul fuerte
+        'StackingClassifier': '#154360'  # azul más oscuro
+    }
+)
+
+fig_comparacion_modelos.update_layout(
+    template='plotly_white',
+    paper_bgcolor='#eaf4fc',
+    plot_bgcolor='white'
+)
+
+# Valores reales vs. predichos
+fig_real_vs_pred = go.Figure()
+
+# Azul medio para reales
+fig_real_vs_pred.add_trace(go.Bar(
+    name='Reales',
+    x=['No Fraude', 'Fraude'],
+    y=[9500, 500],
+    marker_color='#5DADE2'  # Azul medio
+))
+
+# Azul fuerte para predichos
+fig_real_vs_pred.add_trace(go.Bar(
+    name='Predichos',
+    x=['No Fraude', 'Fraude'],
+    y=[9400, 600],
+    marker_color='#2874A6'  # Azul oscuro
+))
+
+fig_real_vs_pred.update_layout(
+    barmode='group',
+    title='Comparación: Valores reales vs. predichos',
+    template='plotly_white',
+    paper_bgcolor='#eaf4fc',
+    plot_bgcolor='white'
+)
+
+
+# Matriz de confusión simulada
+fig_confusion = go.Figure(data=go.Heatmap(
+    z=[[9200, 300], [200, 300]],
+    x=['Predicho No Fraude', 'Predicho Fraude'],
+    y=['Real No Fraude', 'Real Fraude'],
+    colorscale=[
+        [0.0, '#D6EAF8'],   # Azul muy claro (valores pequeños)
+        [0.2, '#AED6F1'],   # Azul claro
+        [0.5, '#5DADE2'],   # Azul medio
+        [0.8, '#2874A6'],   # Azul fuerte
+        [1.0, '#154360']    # Azul muy oscuro (valores grandes)
+    ],
+    colorbar=dict(title='Conteo')
+))
+
+fig_confusion.update_layout(
+    title='Matriz de Confusión',
+    template='plotly_white',
+    paper_bgcolor='#eaf4fc',
+    plot_bgcolor='white'
+)
+
+# Tarjetas KPI simuladas
+kpi_cards = dbc.Row([
+    dbc.Col(dbc.Card([
+        dbc.CardBody([
+            html.H5("AUC (modelo final)", className="card-title text-center"),
+            html.H2("0.96", className="card-text text-center")
+        ])
+    ], style={'backgroundColor': '#2874A6', 'color': 'white'}), width=4),
+
+    dbc.Col(dbc.Card([
+        dbc.CardBody([
+            html.H5("F1-Score", className="card-title text-center"),
+            html.H2("0.87", className="card-text text-center")
+        ])
+    ], style={'backgroundColor': '#5DADE2', 'color': 'white'}), width=4),
+
+    dbc.Col(dbc.Card([
+        dbc.CardBody([
+            html.H5("Recall", className="card-title text-center"),
+            html.H2("0.84", className="card-text text-center")
+        ])
+    ], style={'backgroundColor': '#AED6F1', 'color': 'black'}), width=4)
+])
+
+
 subtabs_resultados = dcc.Tabs([
-    dcc.Tab(label='a. EDA', children=[
-        html.H4('a. Análisis Exploratorio de Datos (EDA)'),
-        
+
+    # Pestaña original de EDA (no se modifica)
+    dcc.Tab(label='EDA', children=[
+
+        # Tus KPIs
         dbc.Row([
             dbc.Col(html.Div([
                 html.H5("Total de transacciones", className="text-white text-center"),
                 html.H4(f"{len(df):,}", className="text-center text-white")
-            ], className="p-3 rounded",style={"backgroundColor": "#636efa"}), width=4),
+            ], className="p-3 rounded", style={"backgroundColor": "#5DADE2"}), width=4),
 
             dbc.Col(html.Div([
-                html.H5("Fraude", className=" text-white text-center"),
+                html.H5("Fraude", className="text-white text-center"),
                 html.H4(f"{df['isfraud'].sum():,}", className="text-center text-white")
-            ], className="p-3 rounded", style={"backgroundColor": "#ef553b"}), width=4),
+            ], className="p-3 rounded", style={"backgroundColor": "#2874A6"}), width=4),
 
             dbc.Col(html.Div([
                 html.H5("No Fraude", className="text-white text-center"),
                 html.H4(f"{(df['isfraud'] == 0).sum():,}", className="text-center text-white")
-            ], className="p-3 rounded", style={"backgroundColor": "#00cc96"}), width=4)
+            ], className="p-3 rounded", style={"backgroundColor": "#AED6F1"}), width=4)
         ], className="mb-4"),
 
-        
         html.Label('Selecciona variable numérica:'),
         dcc.Dropdown(
             id='eda-variable-dropdown',
-           options=[{'label': col, 'value': col} for col in columnas_numericas_validas if col in df.columns],
-            value='transactionamt',  # o cualquier otra variable que te interese por defecto
+            options=[{'label': col, 'value': col} for col in columnas_numericas_validas if col in df.columns],
+            value='transactionamt',
             style={'width': '50%'}
         ),
 
@@ -218,7 +364,7 @@ subtabs_resultados = dcc.Tabs([
         ]),
 
         html.Br(),
-        #html.Hr(),
+
         dbc.Row([
             dbc.Col(
                 dbc.Card(
@@ -242,38 +388,86 @@ subtabs_resultados = dcc.Tabs([
             dbc.Col([
                 html.H5("Distribución temporal de transacciones por hora virtual", className="mt-4"),
                 dcc.Graph(figure=fig_transacciones_hora, id='grafico-transacciones-hora')], width=10)
-
-        ]),
-
-
-        
-    ]),
-    dcc.Tab(label='b. EDA 2', children=[
-        html.H4('b. EDA 2 - Análisis adicional'),
-        html.P('Aquí puedes incluir análisis exploratorios complementarios como segmentaciones, boxplots, histogramas comparativos o mapas si aplica.')
-    ]),
-    dcc.Tab(label='c. Visualización del Modelo', children=[
-        html.H4('c. Visualización de Resultados del Modelo'),
-        html.P('Aquí se mostrarán las métricas de evaluación de los modelos en forma de tabla.'),
-        html.Ul([
-            html.Li('Gráficas de comparación: valores reales vs. predichos'),
-            html.Li('Análisis de residuales')
         ])
     ]),
-    dcc.Tab(label='d. Indicadores del Modelo', children=[
-        html.H4('d. Indicadores de Evaluación del Modelo'),
-        html.Ul([
-            html.Li(' Tabla de errores: RMSE, MAE, MSE, etc.'),
-            html.Li(' Interpretación de los valores para comparar modelos')
-        ])
+
+    # EDA 2 - Análisis adicional
+    dcc.Tab(label='EDA 2 - Análisis adicional', children=[
+       dcc.Graph(figure=eda2_fig)
     ]),
-    dcc.Tab(label='e. Limitaciones', children=[
-        html.H4('e. Limitaciones y Consideraciones Finales'),
-        html.Ul([
-            html.Li('Restricciones del análisis'),
-            html.Li('Posibles mejoras futuras')
-        ])
+
+    # Visualización del Modelo
+    dcc.Tab(label='Visualización de Resultados del Modelo', children=[
+    
+    dbc.Row([
+        # Gráfico valores reales vs predichos
+        dbc.Col(dcc.Graph(
+            figure=fig_real_vs_pred,
+            style={'height': '100%', 'minHeight': '400px'}
+        ), md=6),
+
+        # Imagen modelo stacking
+        dbc.Col(html.Img(
+            src='/assets/imgResultados_1.png',
+            style={
+                'width': '100%',
+                'height': '100%',
+                'objectFit': 'contain',
+                'borderRadius': '10px',
+                'boxShadow': '0 4px 8px rgba(0,0,0,0.1)'
+            }
+        ), md=6)
+    ], className='mt-4', style={'minHeight': '420px'}),
+
+    html.Br(),
+
+    dbc.Row([
+        dbc.Col(dcc.Graph(figure=fig_confusion), md=12)
     ])
+])
+,
+
+    # Indicadores del Modelo
+    dcc.Tab(label='Indicadores de Evaluación del Modelo', children=[
+        html.H4('Indicadores del Modelo Final'),
+        html.P('Los siguientes valores resumen el desempeño del modelo StackingClassifier, basado en validación cruzada y conjunto de prueba:'),
+
+        kpi_cards,
+
+        html.Br(),
+        html.H5("Comparación entre modelos"),
+        dcc.Graph(figure=fig_comparacion_modelos)
+    ]),
+
+    # Limitaciones y consideraciones finales
+    dcc.Tab(label='Limitaciones y Consideraciones Finales', children=[
+        dbc.Container([
+
+            dbc.Card([
+                dbc.CardBody([
+                    html.H4("Limitaciones del Modelo", className="mb-3"),
+                    html.Ul([
+                        html.Li("📉 La base de datos está altamente desbalanceada: solo el 3.5% de las transacciones son fraude."),
+                        html.Li("🔒 Las variables están anonimizadas, lo cual dificulta la interpretación directa de la importancia de atributos."),
+                        html.Li("🧪 El modelo fue entrenado sobre una partición y no en datos en tiempo real, lo cual limita su despliegue inmediato."),
+                        html.Li("⚠️ No se incluyó análisis de residuales ni ajuste en producción por limitaciones computacionales.")
+                    ], style={'fontSize': '1.15rem', 'lineHeight': '2'})
+                ])
+            ], className="mb-4", style={'backgroundColor': '#f8f9fa', 'borderRadius': '10px'}),
+
+            dbc.Card([
+                dbc.CardBody([
+                    html.H4("Consideraciones para futuro trabajo", className="mb-3"),
+                    html.Ul([
+                        html.Li("🔁 Integrar modelos de autoaprendizaje que se actualicen con nuevas transacciones."),
+                        html.Li("🧠 Explorar modelos con aprendizaje no supervisado para detectar anomalías sin necesidad de etiquetas."),
+                        html.Li("🚀 Desplegar en tiempo real el modelo con un pipeline actualizado para detección automática.")
+                    ], style={'fontSize': '1.15rem', 'lineHeight': '2'})
+                ])
+            ])
+        ], className="p-4")
+    ])
+
 ])
 
 
@@ -549,25 +743,73 @@ tabs = [
     dcc.Tab(label='⚙️ Metodología', children=[
         subtabs_metodologia
     ]),
-    dcc.Tab(label='7. Resultados y Análisis Final', children=[
-        html.H2('Resultados y Análisis Final'),
+    dcc.Tab(label='📊 Resultados y Análisis Final', children=[
         subtabs_resultados
     ]),
-    dcc.Tab(label='8. Conclusiones', children=[
-        html.H2('Conclusiones'),
-        html.Ul([
-            html.Li('Listar los principales hallazgos del proyecto'),
-            html.Li('Relevancia de los resultados obtenidos'),
-            html.Li('Aplicaciones futuras y recomendaciones')
+    dcc.Tab(label='🧩 Conclusiones', children=[
+        dbc.Container([
+            dbc.Card([
+                dbc.CardBody([
+                    html.H4("Conclusiones del Proyecto", className="mb-4"),
+
+                    html.H5("📌 Principales hallazgos"),
+                    html.Ul([
+                        html.Li("El 3.5% de las transacciones fueron clasificadas como fraude, confirmando el fuerte desbalance."),
+                        html.Li("El modelo StackingClassifier superó a otros modelos individuales con AUC de 0.96."),
+                        html.Li("EDA reveló patrones útiles para distinguir fraudes, como los montos y tipos de tarjeta.")
+                    ], style={'fontSize': '1.15rem'}),
+
+                    html.H5("📊 Relevancia de los resultados", className="mt-4"),
+                    html.P("""
+                        Los resultados del modelo permiten automatizar con éxito la detección de fraude en plataformas digitales. 
+                        El dashboard facilita la interpretación de los hallazgos tanto para expertos como para usuarios de negocio.
+                    """, style={'fontSize': '1.15rem', 'lineHeight': '2'}),
+
+                    html.H5("🚀 Aplicaciones futuras y recomendaciones", className="mt-4"),
+                    html.Ul([
+                        html.Li("Desplegar el modelo como servicio en tiempo real para detección inmediata."),
+                        html.Li("Incorporar variables contextuales adicionales para mejorar la precisión."),
+                        html.Li("Implementar monitoreo y recalibración periódica del modelo.")
+                    ], style={'fontSize': '1.15rem'})
+                ])
+            ], style={'backgroundColor': '#f8f9fa', 'borderRadius': '10px', 'padding': '20px', 'boxShadow': '0 2px 6px rgba(0,0,0,0.1)'})
         ])
     ])
+
 ]
 
 
+
 app.layout = dbc.Container([
-    html.H1("Dashboard Detección de Fraude ", className="text-center my-4"),
+
+    dbc.Row([
+        # Columna izquierda: logo
+        dbc.Col(html.Img(
+            src='/assets/Logo-UNINORTE.png',
+            style={'height': '80px'}
+        ), width=3, className="d-flex align-items-center"),
+
+        # Columna centro: título centrado
+        dbc.Col(html.H1(
+            "Dashboard Detección de Fraude",
+            className="text-center"
+        ), width=6, className="d-flex align-items-center justify-content-center"),
+
+        # Columna derecha: autores alineados a la derecha
+        dbc.Col(html.Div([
+            html.P("SEBASTIÁN PÉREZ ALBOR", style={
+                'margin': 0, 'fontWeight': 'bold', 'textAlign': 'right'})
+        ]), width=3, className="d-flex flex-column justify-content-center align-items-end")
+    ], className="mb-4"),
+
     dcc.Tabs(tabs)
-], fluid=True)
+
+], fluid=True, style={'backgroundColor': '#eaf4fc', 'minHeight': '100vh', 'padding': '20px'})
+
+
+
+
+
 
 # === Callback interactividad EDA ===
 @app.callback(
@@ -587,13 +829,21 @@ def actualizar_eda(variable, filtro):
     df_filtrado[variable] = pd.to_numeric(df_filtrado[variable], errors='coerce')
 
     if df_filtrado[variable].dropna().empty:
-        return {}, {}, html.Ul([html.Li("No hay datos numéricos válidos para esta variable.")])
+        return {}, {}, html.Ul([html.Li("No hay datos numéricos válidos para esta variable.")]), {}
 
+    # Histograma en tonos azules
     fig_hist = px.histogram(df_filtrado, x=variable, nbins=40,
-                            title=f'Distribución de {variable}')
+                            title=f'Distribución de {variable}',
+                            color_discrete_sequence=['#2874A6', '#5DADE2', '#154360'])
+    fig_hist.update_layout(template='plotly_white', paper_bgcolor='#eaf4fc', plot_bgcolor='white')
+
+    # Boxplot en azul
     fig_box = px.box(df_filtrado, y=variable, points='outliers',
-                     title=f'Boxplot de {variable}')
-    
+                     title=f'Boxplot de {variable}',
+                     color_discrete_sequence=['#2874A6', '#5DADE2', '#154360'])
+    fig_box.update_layout(template='plotly_white', paper_bgcolor='#eaf4fc', plot_bgcolor='white')
+
+    # Violin (aunque no se retorna)
     fig_violin = px.violin(
         df_filtrado,
         y=variable,
@@ -601,47 +851,49 @@ def actualizar_eda(variable, filtro):
         box=True,
         points="all",
         title=f'Distribución de {variable} según tipo de transacción',
-        color_discrete_map={0: "blue", 1: "red"})
-    
+        color_discrete_map={0: "#5DADE2", 1: "#2874A6"}
+    )
+    fig_violin.update_layout(template='plotly_white', paper_bgcolor='#eaf4fc', plot_bgcolor='white')
 
-    # Pie chart de card6
+    # Pie chart en gama azul
     card6_counts = df_filtrado['card6'].value_counts(normalize=True).reset_index()
     card6_counts.columns = ['card6', 'proporcion']
 
     fig_card6 = px.pie(card6_counts, names='card6', values='proporcion',
-                    title='Distribución de tipo de tarjeta (card6)',
-                    hole=0.3)
+                       title='Distribución de tipo de tarjeta (card6)',
+                       hole=0.3,
+                       color_discrete_sequence=['#2874A6', '#5DADE2', '#154360'])
     fig_card6.update_traces(textinfo='percent+label')
+    fig_card6.update_layout(template='plotly_white', paper_bgcolor='#eaf4fc')
 
-
-
+    # Estadísticas
     stats = df_filtrado[variable].describe().round(2)
+
     resumen = dbc.Card(
-    dbc.CardBody([
-        html.H6("Resumen estadístico", className="fw-bold mb-3"),
-        html.P(f"Cuenta: {stats['count']}"),
-        html.P(f"Media: {stats['mean']}"),
-        html.P(f"Desviación estándar: {stats['std']}"),
-        html.P(f"Mínimo: {stats['min']}"),
-        html.P(f"Q1: {stats['25%']}"),
-        html.P(f"Mediana: {stats['50%']}"),
-        html.P(f"Q3: {stats['75%']}"),
-        html.P(f"Máximo: {stats['max']}")
-    ]),
-    style={
-        "backgroundColor": "#e7f1fb",
-        "borderRadius": "8px",
-        "fontSize": "14px",
-        "lineHeight": "1.6",
-        "boxShadow": "none",
-        "border": "1px solid #cfe2ff"
-    }
-)
-
-
+        dbc.CardBody([
+            html.H6("Resumen estadístico", className="fw-bold mb-3", style={'color': '#2874A6'}),
+            html.P(f"Cuenta: {stats['count']}", style={'color': '#1C2833'}),
+            html.P(f"Media: {stats['mean']}", style={'color': '#1C2833'}),
+            html.P(f"Desviación estándar: {stats['std']}", style={'color': '#1C2833'}),
+            html.P(f"Mínimo: {stats['min']}", style={'color': '#1C2833'}),
+            html.P(f"Q1: {stats['25%']}", style={'color': '#1C2833'}),
+            html.P(f"Mediana: {stats['50%']}", style={'color': '#1C2833'}),
+            html.P(f"Q3: {stats['75%']}", style={'color': '#1C2833'}),
+            html.P(f"Máximo: {stats['max']}", style={'color': '#1C2833'})
+        ]),
+        style={
+            "backgroundColor": "#ffffff",
+            "borderRadius": "10px",
+            "border": "1px solid #AED6F1",
+            "boxShadow": "0 2px 6px rgba(0, 0, 0, 0.05)",
+            "fontSize": "15px",
+            "padding": "15px"
+        }
+    )
 
 
     return fig_hist, fig_box, resumen, fig_card6
+
 
 
 

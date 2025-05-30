@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 from sqlalchemy import create_engine
+import psycopg2
 
 # Cargar las variables de entorno desde un archivo .env local
 load_dotenv()

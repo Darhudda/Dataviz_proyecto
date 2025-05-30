@@ -6,6 +6,9 @@ import pandas as pd
 from sqlalchemy import create_engine
 from dash import Input, Output
 import plotly.express as px
+import joblib
+from dash import dash_table
+
 
 # Configuración de conexión a PostgreSQL
 from sqlalchemy import create_engine
@@ -37,6 +40,14 @@ SELECT EXISTS (
 
 # INCIO DEL DASHBOARD
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+html.Div([
+    html.H1("Análisis y Detección de Fraudes en Transacciones Electrónicas", style={
+        'color': 'white',
+        'textAlign': 'center',
+        'padding': '20px'
+    })
+], style={'backgroundColor': '#111111'})
+
 app.title = "Dashboard del Proyecto Final "
 server = app.server  
 
@@ -84,7 +95,27 @@ columnas_numericas_validas = [
 
 options=[{'label': col, 'value': col} for col in columnas_numericas_validas if col in df.columns]
 
-# para crear la figura de las horas
+
+# Crear figura de balance de clases
+conteo = df['isfraud'].value_counts().sort_index()
+proporcion = df['isfraud'].value_counts(normalize=True).sort_index()
+
+fig_balance_clases = px.pie(
+    names=['No Fraude', 'Fraude'],
+    values=conteo.values,
+    title='Distribución de Clases (isfraud)',
+    hole=0.3,
+    color_discrete_sequence=["#2ca02c", "#d62728"]
+)
+fig_balance_clases.update_traces(textinfo='percent+label')
+
+# crear modelo
+metrics_df = joblib.load('metrics_df.pkl')
+fig_roc = joblib.load('fig_roc.pkl')
+fig_cm = joblib.load('fig_cm.pkl')
+fig_imp = joblib.load('fig_imp.pkl')
+fig_disp = joblib.load('fig_disp.pkl')
+
 
 # Crear columna de hora virtual si no existe
 if 'hora_virtual' not in df.columns:
@@ -194,11 +225,30 @@ subtabs_resultados = dcc.Tabs([
     ]),
     dcc.Tab(label='b. EDA 2', children=[
         html.H4('b. EDA 2 - Análisis adicional'),
-        html.P('Aquí puedes incluir análisis exploratorios complementarios como segmentaciones, boxplots, histogramas comparativos o mapas si aplica.')
+        html.H5("Distribución de clases en la variable objetivo"),
+        dcc.Graph(figure=fig_balance_clases),
     ]),
     dcc.Tab(label='c. Visualización del Modelo', children=[
         html.H4('c. Visualización de Resultados del Modelo'),
-        html.P('Aquí se mostrarán las métricas de evaluación de los modelos en forma de tabla.'),
+
+        # Mostrar tabla de métricas
+        dash_table.DataTable(
+            data=metrics_df.to_dict('records'),
+            columns=[{"name": i, "id": i} for i in metrics_df.columns]
+        ),
+
+        html.Br(),
+        html.Div([
+            dcc.Graph(figure=fig_cm, style={'width': '48%', 'display': 'inline-block'}),
+            dcc.Graph(figure=fig_disp, style={'width': '48%', 'display': 'inline-block'})
+        ], style={'display': 'flex', 'justifyContent': 'space-between'}),
+
+        html.Div([
+            dcc.Graph(figure=fig_roc, style={'width': '48%', 'display': 'inline-block'}),
+            dcc.Graph(figure=fig_imp, style={'width': '48%', 'display': 'inline-block'})
+        ], style={'display': 'flex', 'justifyContent': 'space-between'}),
+
+
         html.Ul([
             html.Li('Gráficas de comparación: valores reales vs. predichos'),
             html.Li('Análisis de residuales')
@@ -228,12 +278,42 @@ tabs = [
         html.P('De manera resumida, indicar lo que se pretende lograr con el proyecto')
     ]),
     dcc.Tab(label='2. Contexto', children=[
-        html.H2('Contexto'),
-        html.P('Descripción breve del contexto del proyecto.'),
-        html.Ul([
-            html.Li('Fuente de los datos: Nombre de la fuente'),
-            html.Li('Variables de interés: listar variables-operacionalización')
-        ])
+        html.H2('Contextualización de los datos'),
+
+        html.Div([
+                html.Img(src='/assets/fraud.png', style={
+                    'width': '400px',
+                    'marginBottom': '10px'
+                }),
+            html.P('Los datos provienen de transacciones reales de comercio electrónico registradas por la empresa Vesta.'),
+            html.P('El objetivo es identificar patrones de comportamiento que permitan detectar posibles fraudes, optimizando la eficacia de los sistemas de alerta y reduciendo falsos positivos.'),
+            html.P('Esto no solo mejora la seguridad financiera de los usuarios, sino que también incrementa la eficiencia operativa de las plataformas comerciales.'),
+
+            html.Br(),
+            html.H4('Descripción de Variables Clave'),
+            html.Ul([
+                html.Li([html.B('TransactionDT'), ': Tiempo relativo de la transacción.']),
+                html.Li([html.B('TransactionAMT'), ': Monto total en USD.']),
+                html.Li([html.B('ProductCD'), ': Código del producto asociado.']),
+                html.Li([html.B('card1 - card6'), ': Información de la tarjeta utilizada.']),
+                html.Li([html.B('addr'), ': Dirección postal.']),
+                html.Li([html.B('dist'), ': Distancia entre direcciones.']),
+                html.Li([html.B('emaildomain'), ': Dominio del correo del comprador.']),
+                html.Li([html.B('C1 – C14'), ': Recuentos y frecuencias codificadas.']),
+                html.Li([html.B('D1 – D15'), ': Intervalos temporales codificados.']),
+                html.Li([html.B('M1 – M9'), ': Indicadores de coincidencia.']),
+                html.Li([html.B('Vxxx'), ': Variables generadas por Vesta.']),
+                html.Li([html.B('DeviceType / DeviceInfo'), ': Información técnica del dispositivo.']),
+                html.Li([html.B('id_12 – id_38'), ': Identificadores de red e identidad.']),
+            ])
+
+        ], style={
+            'backgroundColor': '#f0f2f5',
+            'padding': '20px',
+            'borderRadius': '10px',
+            'boxShadow': '0 2px 5px rgba(0,0,0,10)',
+            'marginTop': '20px'
+        }),
     ]),
     dcc.Tab(label='3. Planteamiento del Problema', children=[
         html.H2('Planteamiento del Problema'),
@@ -277,7 +357,15 @@ tabs = [
 
 
 app.layout = dbc.Container([
-    html.H1("Dashboard del Proyecto Final ", className="text-center my-4"),
+    html.Div([
+        html.H1("Análisis y Detección de Fraudes en Transacciones Electrónicas", style={
+            'color': 'white',
+            'textAlign': 'center',
+            'padding': '20px',
+            'fontWeight': 'bold'
+        })
+    ], style={'backgroundColor': '#111111'}),
+
     dcc.Tabs(tabs)
 ], fluid=True)
 
